@@ -1,0 +1,7 @@
+{
+  "name": "Entregas ZAP Dashboard",
+  "description": "A comprehensive dashboard for managing condominium deliveries, employees, and residents with real-time analytics and user management features.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

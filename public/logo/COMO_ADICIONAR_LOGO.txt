@@ -1,0 +1,33 @@
+========================================
+  COMO ADICIONAR O LOGO NO SISTEMA
+========================================
+
+1. Coloque seu arquivo de logo nesta pasta (public/logo/)
+
+2. Renomeie o arquivo para: logo.png
+   (ou logo.jpg, logo.svg - mas atualize o código se usar outro formato)
+
+3. Tamanho recomendado:
+   - Login: 512x512 pixels
+   - Dashboards: 256x256 pixels
+
+4. O logo será exibido automaticamente em:
+   - Tela de Login
+   - Dashboard de Funcionários
+   - Dashboard de Síndicos
+   - Dashboard de Super Admin (sidebar)
+
+5. Se o logo não aparecer, verifique:
+   - O nome do arquivo está correto: logo.png
+   - O arquivo está nesta pasta: public/logo/
+   - O servidor foi reiniciado após adicionar o logo
+
+========================================
+FORMATO DO ARQUIVO:
+========================================
+Caminho completo: public/logo/logo.png
+
+Formatos aceitos: PNG, JPG, SVG
+Fundo: Transparente (PNG) é recomendado
+
+========================================
