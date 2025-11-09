@@ -751,7 +751,6 @@ Este é um atendimento automático, Entregas ZAP.`
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    capture
                                     ref={fileInputRef}
                                     onChange={handlePhotoChange}
                                     className="hidden"
