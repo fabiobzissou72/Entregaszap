@@ -41,14 +41,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (cpf: string, senha: string): Promise<{ success: boolean; error?: string }> => {
     try {
       console.log('🔐 Tentando login com CPF:', cpf);
+      console.log('🔍 Supabase URL:', supabase.supabaseUrl?.substring(0, 30));
 
       // 1. Tentar como Super Admin
+      console.log('🔍 Buscando Super Admin...');
       const { data: superAdmin, error: saError } = await supabase
         .from('super_administradores')
         .select('*')
         .eq('cpf', cpf)
         .eq('ativo', true)
         .single();
+
+      console.log('🔍 Resultado Super Admin:', { found: !!superAdmin, error: saError?.message });
 
       if (superAdmin && !saError) {
         console.log('👨‍💼 Super Admin encontrado:', superAdmin.nome);
@@ -72,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // 2. Tentar como Funcionário
+      console.log('🔍 Buscando Funcionário...');
       const { data: funcionario, error: funcError } = await supabase
         .from('funcionarios')
         .select(`
@@ -81,6 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('cpf', cpf)
         .eq('ativo', true)
         .single();
+
+      console.log('🔍 Resultado Funcionário:', { found: !!funcionario, error: funcError?.message });
 
       if (funcionario && !funcError) {
         console.log('👷 Funcionário encontrado:', funcionario.nome);
