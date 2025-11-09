@@ -118,11 +118,11 @@ export default function SindicoDashboard({ user, onLogout }: SindicoDashboardPro
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <div className="hidden md:flex items-center gap-3 px-3 sm:px-4 py-2 bg-purple-50 rounded-lg">
-              <User size={20} className="text-purple-600" />
+            <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-purple-50 rounded-lg">
+              <User size={18} className="sm:w-5 sm:h-5 text-purple-600" />
               <div>
-                <p className="text-sm font-medium text-gray-800">{user.nome}</p>
-                <p className="text-xs text-gray-500">Síndico</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-800 truncate max-w-[120px] sm:max-w-none">{user.nome}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">Síndico</p>
               </div>
             </div>
 

@@ -748,13 +748,13 @@ Este é um atendimento automático, Entregas ZAP.`
                                         Tirar foto
                                     </button>
                                 </div>
-                                <input 
-                                    type="file" 
-                                    accept="image/*" 
-                                    capture="environment"
-                                    ref={fileInputRef} 
-                                    onChange={handlePhotoChange} 
-                                    className="hidden" 
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture
+                                    ref={fileInputRef}
+                                    onChange={handlePhotoChange}
+                                    className="hidden"
                                 />
                             </>
                         )}
