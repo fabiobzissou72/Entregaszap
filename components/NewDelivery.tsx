@@ -212,9 +212,17 @@ export default function NewDelivery({ condos, residents, employees, addDelivery 
     }
     
     const openCamera = async () => {
+        // Verificar se getUserMedia está disponível
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.log("getUserMedia não disponível, usando input file com capture");
+            // Fallback: usar input file com capture="environment"
+            fileInputRef.current?.click();
+            return;
+        }
+
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' } 
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
             });
             setCameraStream(stream);
             if (videoRef.current) {
@@ -232,7 +240,9 @@ export default function NewDelivery({ condos, residents, employees, addDelivery 
                 setShowCamera(true);
             } catch (fallbackErr) {
                 console.error("Error accessing camera: ", fallbackErr);
-                alert("Não foi possível acessar a câmera. Verifique as permissões do seu navegador.");
+                // Fallback final: usar input file
+                console.log("Usando input file como fallback");
+                fileInputRef.current?.click();
             }
         }
     };
@@ -361,7 +371,7 @@ Este é um atendimento automático, Entregas ZAP.`
             console.log('ℹ️ Nenhuma foto selecionada');
         }
 
-        // Buscar o webhook do condomínio selecionado
+        // Buscar o webhook do condomínio selecionado (usa webhook específico do condomínio ou o geral)
         const selectedCondo = condos.find(c => c.name.toLowerCase() === condo.toLowerCase());
         const webhookUrl = selectedCondo?.webhookUrl || 'https://webhook.fbzia.com.br/webhook/entregaszapnovo';
 
@@ -731,21 +741,21 @@ Este é um atendimento automático, Entregas ZAP.`
                                 </div>
                                 <p className="text-gray-600 mb-2">Arraste e solte uma imagem aqui</p>
                                 <p className="text-xs text-gray-400 mb-4">ou</p>
-                                <div className="flex flex-col sm:flex-row gap-4">
-                                    <button 
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="px-6 py-2.5 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                                    >
-                                        Selecione um arquivo
-                                    </button>
-                                     <button 
+                                <div className="flex flex-col gap-3 w-full max-w-xs mx-auto">
+                                     <button
                                         type="button"
                                         onClick={openCamera}
-                                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-500 border border-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
+                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-500 border border-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors shadow-md"
                                     >
-                                        <Camera size={18}/>
-                                        Tirar foto
+                                        <Camera size={20}/>
+                                        Tirar Foto com Câmera
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full px-6 py-2.5 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+                                    >
+                                        📁 Escolher da Galeria
                                     </button>
                                 </div>
                                 <input

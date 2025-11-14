@@ -1,14 +1,14 @@
 import React from 'react';
-import { LogOut, User, Shield, Building } from '../Icons';
+import { LogOut, User, Shield } from '../Icons';
 import type { AuthUser } from '../../contexts/AuthContext';
+import App from '../../App';
 
 interface SuperAdminDashboardProps {
   user: AuthUser;
   onLogout: () => void;
-  children: React.ReactNode;
 }
 
-export default function SuperAdminDashboard({ user, onLogout, children }: SuperAdminDashboardProps) {
+export default function SuperAdminDashboard({ user, onLogout }: SuperAdminDashboardProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header do Super Admin */}
@@ -59,8 +59,8 @@ export default function SuperAdminDashboard({ user, onLogout, children }: SuperA
         <span className="sm:hidden">SUPER ADMIN</span>
       </div>
 
-      {/* Conteúdo Principal (DashboardLayout do App.tsx) */}
-      {children}
+      {/* Conteúdo Principal (App.tsx com controle total) */}
+      <App />
     </div>
   );
 }

@@ -400,6 +400,25 @@ export async function createCondominium(condominio: Database['public']['Tables']
   return data;
 }
 
+/**
+ * Atualiza o webhook de um condomínio
+ */
+export async function updateCondominiumWebhook(condominioId: string, webhookUrl: string | null) {
+  const { data, error } = await supabase
+    .from('condominios')
+    .update({ webhook_url: webhookUrl })
+    .eq('id', condominioId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao atualizar webhook do condomínio:', error);
+    throw error;
+  }
+
+  return data;
+}
+
 // ============================================
 // RELATÓRIOS
 // ============================================

@@ -201,11 +201,12 @@ export default function FuncionarioDashboard({ user, onLogout }: FuncionarioDash
       <div className="flex">
         {/* Sidebar */}
         <aside className={`
-          fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200
+          fixed lg:static left-0 z-30 w-64 bg-white border-r border-gray-200
           transform transition-transform duration-300 ease-in-out
+          top-[73px] lg:top-0 bottom-0 lg:inset-y-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
-          <nav className="p-4 space-y-2 mt-16 lg:mt-4">
+          <nav className="p-4 space-y-2 h-full overflow-y-auto">
             {menuItems.map(item => {
               const Icon = item.icon;
               const isActive = currentPage === item.id;
@@ -234,7 +235,7 @@ export default function FuncionarioDashboard({ user, onLogout }: FuncionarioDash
         {/* Overlay para mobile */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden top-[73px]"
             onClick={() => setSidebarOpen(false)}
           />
         )}

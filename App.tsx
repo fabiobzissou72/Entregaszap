@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useMemo, createContext, useContext, useEffect } from 'react';
-import { Search, Bell, MessageSquare, Settings, User, UserCog, FileText, TrendingUp, TrendingDown, Package, BookOpen, Shield, ChevronDown, Users, Building, BarChart, Plus, X, Upload, Download, Edit, Trash2, Globe } from './components/Icons';
+import { Search, Bell, MessageSquare, Settings, User, UserCog, FileText, TrendingUp, TrendingDown, Package, BookOpen, Shield, ChevronDown, Users, Building, BarChart, Plus, X, Upload, Download, Edit, Trash2, Globe, Send, Menu } from './components/Icons';
 import DeliveryReports from './components/DeliveryReports';
 import NewDelivery from './components/NewDelivery';
 import Pickups from './components/Pickups';
@@ -155,6 +155,7 @@ function DashboardLayout() {
   const { user, theme, t } = useAppContext();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState('admin');
   const [activeAdminTab, setActiveAdminTab] = useState('dashboard');
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
@@ -164,6 +165,11 @@ function DashboardLayout() {
   const [editingCondo, setEditingCondo] = useState<Condo | null>(null);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   const residentFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Estados para gerenciamento de webhooks
+  const [defaultWebhookUrl, setDefaultWebhookUrl] = useState('https://webhook.fbzia.com.br/webhook/entregaszapnovo');
+  const [editingCondoWebhook, setEditingCondoWebhook] = useState<{ id: number; name: string; webhookUrl: string | null } | null>(null);
+  const [tempWebhookUrl, setTempWebhookUrl] = useState('');
 
   // Carregar dados do Supabase
   const { condominios: dbCondominios, loading: loadingCondos } = useCondominios();
@@ -549,6 +555,50 @@ function DashboardLayout() {
     setCondos(prevCondos => prevCondos.filter(c => c.id !== condoId));
   };
 
+  // Funções para gerenciar webhooks
+  const handleEditCondoWebhook = (condo: Condo) => {
+    setEditingCondoWebhook({ id: condo.id, name: condo.name, webhookUrl: condo.webhookUrl || null });
+    setTempWebhookUrl(condo.webhookUrl || '');
+  };
+
+  const handleSaveCondoWebhook = async () => {
+    if (!editingCondoWebhook) return;
+
+    try {
+      const { updateCondominiumWebhook } = await import('./lib/database-helpers');
+      const condoUuid = numberToUuid(editingCondoWebhook.id);
+
+      if (!condoUuid) {
+        alert('Erro ao identificar o condomínio');
+        return;
+      }
+
+      const webhookToSave = tempWebhookUrl.trim() === '' ? null : tempWebhookUrl.trim();
+      await updateCondominiumWebhook(condoUuid, webhookToSave);
+
+      // Atualizar estado local
+      setCondos(prevCondos =>
+        prevCondos.map(c =>
+          c.id === editingCondoWebhook.id
+            ? { ...c, webhookUrl: webhookToSave || undefined }
+            : c
+        )
+      );
+
+      setEditingCondoWebhook(null);
+      setTempWebhookUrl('');
+      alert('Webhook atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar webhook:', error);
+      alert('Erro ao salvar webhook. Tente novamente.');
+    }
+  };
+
+  const handleCancelEditWebhook = () => {
+    setEditingCondoWebhook(null);
+    setTempWebhookUrl('');
+  };
+
     // Resident modal and form handlers
   const openResidentModal = () => {
     setEditingResident(null);
@@ -820,9 +870,15 @@ function DashboardLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-800">
+    <div className="flex h-screen bg-gray-50 text-gray-800 overflow-hidden">
       {/* Sidebar */}
-      <aside className={`${sidebarExpanded ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 flex flex-col transition-all duration-300`}>
+      <aside className={`
+        w-64 ${!sidebarExpanded ? 'lg:w-20' : ''}
+        bg-white border-r border-gray-200 flex flex-col transition-all duration-300
+        fixed lg:static left-0 z-30
+        top-0 bottom-0 h-full
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <img
@@ -846,7 +902,7 @@ function DashboardLayout() {
             <p className="text-xs font-semibold text-gray-400 uppercase mb-3 px-3">{t('sidebar.geral')}</p>
             <div className="space-y-1">
               <button
-                onClick={() => setCurrentPage('admin')}
+                onClick={() => { setCurrentPage('admin'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-left transition-colors ${
                   currentPage === 'admin' ? 'bg-[var(--primary-color-light)] text-[var(--primary-color)]' : 'text-gray-600 hover:bg-gray-50'
                 }`}
@@ -855,7 +911,7 @@ function DashboardLayout() {
                 {sidebarExpanded && <span>{t('sidebar.admin')}</span>}
               </button>
               <button
-                onClick={() => setCurrentPage('reports')}
+                onClick={() => { setCurrentPage('reports'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-left transition-colors ${
                   currentPage === 'reports' ? 'bg-[var(--primary-color-light)] text-[var(--primary-color)]' : 'text-gray-600 hover:bg-gray-50'
                 }`}
@@ -864,7 +920,7 @@ function DashboardLayout() {
                 {sidebarExpanded && <span>{t('sidebar.relatorios')}</span>}
               </button>
               <button
-                onClick={() => setCurrentPage('newDelivery')}
+                onClick={() => { setCurrentPage('newDelivery'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-left transition-colors ${
                   currentPage === 'newDelivery' ? 'bg-[var(--primary-color-light)] text-[var(--primary-color)]' : 'text-gray-600 hover:bg-gray-50'
                 }`}
@@ -873,7 +929,7 @@ function DashboardLayout() {
                 {sidebarExpanded && <span>{t('sidebar.novaentrega')}</span>}
               </button>
               <button
-                onClick={() => setCurrentPage('pickups')}
+                onClick={() => { setCurrentPage('pickups'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-left transition-colors ${
                   currentPage === 'pickups' ? 'bg-[var(--primary-color-light)] text-[var(--primary-color)]' : 'text-gray-600 hover:bg-gray-50'
                 }`}
@@ -882,7 +938,7 @@ function DashboardLayout() {
                 {sidebarExpanded && <span>{t('sidebar.retiradas')}</span>}
               </button>
               <button
-                onClick={() => setCurrentPage('reminder')}
+                onClick={() => { setCurrentPage('reminder'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-left transition-colors ${
                   currentPage === 'reminder' ? 'bg-[var(--primary-color-light)] text-[var(--primary-color)]' : 'text-gray-600 hover:bg-gray-50'
                 }`}
@@ -897,7 +953,7 @@ function DashboardLayout() {
             <p className="text-xs font-semibold text-gray-400 uppercase mb-3 px-3">{t('sidebar.suporte')}</p>
             <div className="space-y-1">
               <button
-                onClick={() => setCurrentPage('settings')}
+                onClick={() => { setCurrentPage('settings'); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-left transition-colors ${
                   currentPage === 'settings' ? 'bg-[var(--primary-color-light)] text-[var(--primary-color)]' : 'text-gray-600 hover:bg-gray-50'
                 }`}
@@ -922,13 +978,29 @@ function DashboardLayout() {
         )}
       </aside>
 
+      {/* Overlay para mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1 max-w-2xl mx-8">
-              <div className="relative">
+        <header className="bg-white border-b border-gray-200 px-3 sm:px-6 py-4">
+          <div className="flex items-center justify-between gap-2">
+            {/* Botão hambúrguer mobile */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
+            >
+              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+
+            <div className="hidden md:flex flex-1 max-w-2xl mx-2 sm:mx-8">
+              <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
@@ -941,24 +1013,24 @@ function DashboardLayout() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
               <div className="relative">
                 <button
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-3 pl-3 pr-2 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 pr-1 sm:pr-2 py-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <div className="text-right">
+                  <div className="hidden sm:block text-right">
                     <p className="text-sm font-semibold text-gray-800">{user.name}</p>
                     <p className="text-xs text-gray-500">Business</p>
                   </div>
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.primaryColor }}>
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.primaryColor }}>
                     {user.avatar ? (
                         <img src={user.avatar} alt="User avatar" className="w-full h-full rounded-full object-cover" />
                     ) : (
-                        <span className="text-white font-semibold">{initials}</span>
+                        <span className="text-white font-semibold text-sm">{initials}</span>
                     )}
                   </div>
-                  <ChevronDown size={16} className="text-gray-400" />
+                  <ChevronDown size={16} className="text-gray-400 hidden sm:block" />
                 </button>
 
                 {userDropdownOpen && (
@@ -1032,6 +1104,17 @@ function DashboardLayout() {
                   >
                     <Globe size={20} />
                     Moradores
+                  </button>
+                  <button
+                    onClick={() => setActiveAdminTab('webhooks')}
+                    className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-medium transition-all ${
+                      activeAdminTab === 'webhooks'
+                        ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg'
+                        : 'bg-white text-gray-700 border border-gray-200 hover:border-orange-300'
+                    }`}
+                  >
+                    <Send size={20} />
+                    Webhooks
                   </button>
                 </div>
 
@@ -1725,6 +1808,148 @@ function DashboardLayout() {
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Webhooks Tab */}
+                {activeAdminTab === 'webhooks' && (
+                  <div className="space-y-6">
+                    {/* Webhook Geral */}
+                    <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl border-2 border-orange-200 p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                          <Send className="text-white" size={24} />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-800 mb-2">Webhook Geral (Padrão)</h3>
+                          <p className="text-sm text-gray-600 mb-4">
+                            Este webhook será usado para todos os condomínios que não possuem um webhook específico configurado.
+                          </p>
+                          <div className="bg-white rounded-lg p-4 border border-orange-200">
+                            <code className="text-sm text-gray-700 break-all">{defaultWebhookUrl}</code>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-3">
+                            💡 Para alterar o webhook geral, entre em contato com o suporte técnico.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lista de Webhooks por Condomínio */}
+                    <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                      <div className="mb-6">
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">Webhooks por Condomínio</h3>
+                        <p className="text-sm text-gray-600">
+                          Configure webhooks específicos para cada condomínio. Deixe vazio para usar o webhook geral.
+                        </p>
+                      </div>
+
+                      <div className="space-y-4">
+                        {condos.map(condo => (
+                          <div key={condo.id} className="bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-orange-300 transition-colors">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-3">
+                                  <Building className="text-orange-600 flex-shrink-0" size={20} />
+                                  <h4 className="font-bold text-gray-800 truncate">{condo.name}</h4>
+                                  {condo.webhookUrl && (
+                                    <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full flex-shrink-0">
+                                      Webhook Customizado
+                                    </span>
+                                  )}
+                                </div>
+
+                                {editingCondoWebhook?.id === condo.id ? (
+                                  <div className="space-y-3">
+                                    <input
+                                      type="url"
+                                      value={tempWebhookUrl}
+                                      onChange={(e) => setTempWebhookUrl(e.target.value)}
+                                      placeholder="https://webhook.fbzia.com.br/webhook/seu-endpoint"
+                                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                                    />
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={handleSaveCondoWebhook}
+                                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all"
+                                      >
+                                        <Send size={16} />
+                                        Salvar
+                                      </button>
+                                      <button
+                                        onClick={handleCancelEditWebhook}
+                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                                      >
+                                        Cancelar
+                                      </button>
+                                      {tempWebhookUrl && (
+                                        <button
+                                          onClick={() => setTempWebhookUrl('')}
+                                          className="px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors"
+                                        >
+                                          Limpar (Usar Webhook Geral)
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-2">
+                                    {condo.webhookUrl ? (
+                                      <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                        <code className="text-xs text-gray-700 break-all">{condo.webhookUrl}</code>
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm text-gray-500 italic">Usando webhook geral (padrão)</p>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              {editingCondoWebhook?.id !== condo.id && (
+                                <button
+                                  onClick={() => handleEditCondoWebhook(condo)}
+                                  className="flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium hover:bg-orange-200 transition-colors flex-shrink-0"
+                                >
+                                  <Edit size={16} />
+                                  Editar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {condos.length === 0 && (
+                          <div className="text-center py-12">
+                            <Building className="mx-auto text-gray-300 mb-4" size={48} />
+                            <p className="text-gray-500 font-medium">Nenhum condomínio cadastrado</p>
+                            <p className="text-sm text-gray-400 mt-1">Cadastre condomínios na aba "Condomínios"</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Informações de Ajuda */}
+                    <div className="bg-blue-50 rounded-2xl border border-blue-200 p-6">
+                      <h4 className="font-bold text-blue-900 mb-3">ℹ️ Como funciona?</h4>
+                      <ul className="space-y-2 text-sm text-blue-800">
+                        <li className="flex gap-2">
+                          <span className="flex-shrink-0">•</span>
+                          <span>O <strong>Webhook Geral</strong> é usado por padrão para todos os condomínios.</span>
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="flex-shrink-0">•</span>
+                          <span>Você pode configurar um <strong>webhook específico</strong> para cada condomínio.</span>
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="flex-shrink-0">•</span>
+                          <span>Se um condomínio tiver webhook customizado, ele será usado no lugar do webhook geral.</span>
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="flex-shrink-0">•</span>
+                          <span>Para remover um webhook customizado e voltar a usar o geral, deixe o campo vazio e salve.</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 )}
               </div>

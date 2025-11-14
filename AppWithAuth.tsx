@@ -34,6 +34,7 @@ function AppRouter() {
       return <SindicoDashboard user={user} onLogout={logout} />;
 
     case 'superadmin':
+      // Super Admin tem acesso total - inclui todo o App.tsx com todas as funcionalidades
       return <SuperAdminDashboard user={user} onLogout={logout} />;
 
     default:

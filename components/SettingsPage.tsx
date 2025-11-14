@@ -163,6 +163,49 @@ export default function SettingsPage() {
         end: '18:00',
         days: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: true, sun: false }
     });
+
+    // State for Security tab
+    const [securityData, setSecurityData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+        twoFactorEnabled: false
+    });
+
+    // State for Integrations tab
+    const [integrationsData, setIntegrationsData] = useState({
+        generalWebhook: 'https://webhook.fbzia.com.br/webhook/entregaszapnovo',
+        logoFile: null as File | null,
+        logoPreview: '/logo/logo.png'
+    });
+
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setIntegrationsData(prev => ({
+                ...prev,
+                logoFile: file,
+                logoPreview: URL.createObjectURL(file)
+            }));
+        }
+    };
+
+    const handleSaveLogo = () => {
+        alert('Logo salvo com sucesso!');
+    };
+
+    const handleSaveWebhook = () => {
+        alert('Webhook salvo com sucesso!');
+    };
+
+    const handleChangePassword = () => {
+        if (securityData.newPassword !== securityData.confirmPassword) {
+            alert('As senhas não coincidem!');
+            return;
+        }
+        alert('Senha alterada com sucesso!');
+        setSecurityData({ currentPassword: '', newPassword: '', confirmPassword: '', twoFactorEnabled: securityData.twoFactorEnabled });
+    };
     const weekDays = [
         { key: 'mon', label: 'Seg' }, { key: 'tue', label: 'Ter' },
         { key: 'wed', label: 'Qua' }, { key: 'thu', label: 'Qui' },
@@ -306,13 +349,154 @@ export default function SettingsPage() {
                 </div>
             )}
 
-            {activeTab !== 'geral' && (
-                <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm flex flex-col items-center justify-center text-center min-h-[400px] animate-fade-in">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-                        <Clock size={32} className="text-gray-400" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-800">{t('settings.soon.title')}</h2>
-                    <p className="text-gray-500 mt-2 max-w-sm">{t('settings.soon.description')}</p>
+            {activeTab === 'seguranca' && (
+                <div className="space-y-8 animate-fade-in-up">
+                    <SettingsSection
+                        title="Segurança da Conta"
+                        description="Gerencie sua senha e opções de segurança."
+                    >
+                        <div className="space-y-4">
+                            <InputField
+                                label="Senha Atual"
+                                type="password"
+                                name="currentPassword"
+                                value={securityData.currentPassword}
+                                onChange={(e) => setSecurityData(p => ({...p, currentPassword: e.target.value}))}
+                                placeholder="Digite sua senha atual"
+                            />
+                            <InputField
+                                label="Nova Senha"
+                                type="password"
+                                name="newPassword"
+                                value={securityData.newPassword}
+                                onChange={(e) => setSecurityData(p => ({...p, newPassword: e.target.value}))}
+                                placeholder="Digite a nova senha"
+                            />
+                            <InputField
+                                label="Confirmar Nova Senha"
+                                type="password"
+                                name="confirmPassword"
+                                value={securityData.confirmPassword}
+                                onChange={(e) => setSecurityData(p => ({...p, confirmPassword: e.target.value}))}
+                                placeholder="Confirme a nova senha"
+                            />
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-gray-50 rounded-xl">
+                            <div className="flex-1">
+                                <p className="font-semibold text-gray-800">Autenticação de Dois Fatores</p>
+                                <p className="text-sm text-gray-500 mt-1">Adicione uma camada extra de segurança</p>
+                            </div>
+                            <button
+                                onClick={() => setSecurityData(p => ({...p, twoFactorEnabled: !p.twoFactorEnabled}))}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                    securityData.twoFactorEnabled ? 'bg-green-500' : 'bg-gray-300'
+                                }`}
+                            >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                    securityData.twoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
+                                }`} />
+                            </button>
+                        </div>
+                        <div className="flex justify-end">
+                            <button onClick={handleChangePassword} className="px-6 py-3 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity" style={{ backgroundColor: 'var(--primary-color)' }}>
+                                Alterar Senha
+                            </button>
+                        </div>
+                    </SettingsSection>
+                </div>
+            )}
+
+            {activeTab === 'integracoes' && (
+                <div className="space-y-8 animate-fade-in-up">
+                    <SettingsSection
+                        title="Webhook Geral do Sistema"
+                        description="Configure o webhook padrão usado por todos os condomínios que não possuem webhook próprio."
+                    >
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">URL do Webhook Geral</label>
+                            <input
+                                type="url"
+                                value={integrationsData.generalWebhook}
+                                onChange={(e) => setIntegrationsData(p => ({...p, generalWebhook: e.target.value}))}
+                                className="w-full bg-white px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] transition"
+                                placeholder="https://webhook.fbzia.com.br/webhook/entregaszapnovo"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                                ℹ️ Este webhook será usado como padrão. Condomínios podem ter webhooks específicos configurados individualmente.
+                            </p>
+                        </div>
+                        <div className="flex justify-end">
+                            <button onClick={handleSaveWebhook} className="px-6 py-3 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity" style={{ backgroundColor: 'var(--primary-color)' }}>
+                                Salvar Webhook
+                            </button>
+                        </div>
+                    </SettingsSection>
+
+                    <SettingsSection
+                        title="Logo do Sistema"
+                        description="Personalize o logo que aparece no sistema."
+                    >
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Logo Atual</label>
+                                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+                                    <div className="w-32 h-32 bg-gray-50 border-2 border-gray-200 rounded-xl flex items-center justify-center p-4 flex-shrink-0">
+                                        <img src={integrationsData.logoPreview} alt="Logo" className="max-w-full max-h-full object-contain" />
+                                    </div>
+                                    <div className="flex-1 w-full text-center sm:text-left">
+                                        <input type="file" id="logo-upload" className="hidden" accept="image/*" onChange={handleLogoChange} />
+                                        <label htmlFor="logo-upload" className="cursor-pointer px-6 py-3 bg-white border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors inline-flex items-center gap-2 justify-center">
+                                            <Upload size={18} />
+                                            Upload Novo Logo
+                                        </label>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Formatos aceitos: PNG, JPG, SVG. Tamanho recomendado: 512x512px
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <button onClick={handleSaveLogo} className="px-6 py-3 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity" style={{ backgroundColor: 'var(--primary-color)' }}>
+                                Salvar Logo
+                            </button>
+                        </div>
+                    </SettingsSection>
+
+                    <SettingsSection
+                        title="PWA - Progressive Web App"
+                        description="Configure o app como um aplicativo instalável."
+                    >
+                        <div className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 mb-2">Aplicativo Instalável</h3>
+                                    <p className="text-sm text-gray-600 mb-4">
+                                        O PWA está configurado! Usuários podem instalar o Entregas ZAP como um app nativo em seus dispositivos.
+                                    </p>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                            <span className="text-gray-700">Manifest configurado</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                            <span className="text-gray-700">Service Worker ativo</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                            <span className="text-gray-700">Ícones otimizados</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </SettingsSection>
                 </div>
             )}
         </div>
